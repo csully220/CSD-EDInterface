@@ -10,7 +10,7 @@ class App:
 
     windowWidth = 1920
     windowHeight = 1080
-    bg = pygame.image.load(r'.\data\vwnXfT3_resized.png')
+    bg = pygame.image.load(r'.\data\background.png')
     buttons = []
     fullscreen = False
 
@@ -18,11 +18,14 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
         self.display_surf = None
+        self.bg = pygame.image.load(r'.\data\background.png')
         self.image_surf = None
         config = configparser.ConfigParser()
         config.read('.\data\csdedif.cfg')
         self.ip = config['network']['server_ip']
         self.port = config['network']['server_port']
+        self.btns = []
+        self.page_load = True
 
     def on_init(self):
         pygame.init()
@@ -40,7 +43,7 @@ class App:
         self.lastMenu = 'NONE'
         self.font_sm = pygame.font.SysFont('Calibri', 26)
         self.font_med = pygame.font.SysFont('Calibri', 32)
-        self.font_lg = pygame.font.SysFont('Calibri', 40)
+        self.font_lg = pygame.font.SysFont('Gautami', 62)
 
         #self.sprites.add(self.player)
 
@@ -55,11 +58,12 @@ class App:
             self.running = False
 
     def on_loop(self):
+        pass
         #self.sprites.update()
-        if self.menu != self.lastMenu:
-            self.lastMenu = self.menu
-            self.buttons.clear()
-            
+        #if self.menu != self.lastMenu:
+        #    self.lastMenu = self.menu
+        #    self.buttons.clear()
+        #    self.addWidget(Button('comms_sm', 'Comms', 20, 80, 320, 320))
             #if self.menu == 'WELCOME':
                 
                 #self.addWidget(Button('common', 'Common', 760, 660))
@@ -69,15 +73,21 @@ class App:
                 #self.addWidget(Button('exit', 'Back', 100, 900))
 
     def on_render(self):
+        
+        if(self.page_load):
+            self.page_load = False
+            self.buttons.clear()
+            self.addWidget(Button('comms_sm', 'Comms', 20, 80, 320, 320))
+            self.addWidget(Button('headlights_sm', 'Lights', 20, 400, 320, 320))
+            self.addWidget(Button('nightvision_sm', 'NVG', 340, 400, 320, 320))
+            
         self.display_surf.blit(self.bg, (0, 0))
         # Render Welcome Screen
         if self.menu == 'WELCOME':
             self.display_surf.blit(self.bg, (0, 0))
-            self.display_surf.blit(self.font_lg.render('Nav Controls', False, white), (690,160))
-            
-            #self.floaters.draw(self.display_surf)
-            #self.display_surf.blit(self.font_med.render(self.current_date, False, white), (60,30))
-            #self.display_surf.blit(self.font_med.render(self.current_time, False, white), (260,30))
+            self.display_surf.blit(self.font_lg.render('CSD ED Controls', False, orange), (20,20))
+            for _b in self.buttons:
+                _b.draw(self.display_surf)
  
         pygame.display.flip()
 
@@ -101,6 +111,7 @@ class App:
             for _b in self.buttons:
                 if _b.get_rect().collidepoint(mspos):
                     _b.active = True
+                    print("mouse detected")
                 else:
                     _b.active = False
             
@@ -215,15 +226,11 @@ class App:
         self.on_cleanup()
 
     def addWidget(self, widget):
-        if type(widget) == TaskCheckbox:
-            #print('Checkbox')
-            self.tskbtns.append(widget)
+       
         if type(widget) == Button:
             #print('Button')
+      
             self.buttons.append(widget)
-        if type(widget) == PlayerButton:
-            #print('Player Button')
-            self.plyrbtns.append(widget)
 
 
 if __name__ == "__main__" :
