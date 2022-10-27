@@ -3,6 +3,11 @@ from pygame.locals import *
 #import time
 import configparser
 #import requests
+import socket
+from time import sleep
+
+HOST = "127.0.0.1"  # The server's hostname or IP address
+PORT = 65432  # The port used by the server
 
 from lib.widgets import *
 
@@ -13,6 +18,7 @@ class App:
     bg = pygame.image.load(r'.\data\background.png')
     buttons = []
     fullscreen = False
+    
 
     def __init__(self):
         self.clock = pygame.time.Clock()
@@ -26,6 +32,19 @@ class App:
         self.port = config['network']['server_port']
         self.btns = []
         self.page_load = True
+        self.connected = False
+        while self.connected == False:
+            self.connect_to_server()
+            
+
+    def connect_to_server(self):
+        try:
+            self.netsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.netsocket.connect((HOST, PORT))
+            self.connected = True
+        except:
+            print("Couldnt connect to server")
+            sleep( 1 )
 
     def on_init(self):
         pygame.init()
@@ -41,9 +60,10 @@ class App:
 
         self.menu = 'WELCOME'
         self.lastMenu = 'NONE'
-        self.font_sm = pygame.font.SysFont('Calibri', 26)
-        self.font_med = pygame.font.SysFont('Calibri', 32)
+        self.font_sm = pygame.font.SysFont('Gautami', 26)
+        self.font_med = pygame.font.SysFont('Gautami', 32)
         self.font_lg = pygame.font.SysFont('Gautami', 62)
+        return True
 
         #self.sprites.add(self.player)
 
@@ -77,9 +97,11 @@ class App:
         if(self.page_load):
             self.page_load = False
             self.buttons.clear()
-            self.addWidget(Button('comms_sm', 'Comms', 20, 80, 320, 320))
-            self.addWidget(Button('headlights_sm', 'Lights', 20, 400, 320, 320))
+            self.addWidget(Button('systemmap_sm', 'SysMap', 20, 80, 320, 320))
+            self.addWidget(Button('galmap_sm', 'GalMap', 20, 400, 320, 320))
             self.addWidget(Button('nightvision_sm', 'NVG', 340, 400, 320, 320))
+            self.addWidget(Button('quit_sm', 'Quit', 340, 400, 320, 320))
+            
             
         self.display_surf.blit(self.bg, (0, 0))
         # Render Welcome Screen
@@ -106,19 +128,42 @@ class App:
             mspos = pygame.mouse.get_pos()
             keys = pygame.key.get_pressed()
             if (keys[K_ESCAPE]):
+                self.netsocket.close()
                 self.running = False
-            
+
+            # Mouse over button highlighted
             for _b in self.buttons:
                 if _b.get_rect().collidepoint(mspos):
                     _b.active = True
-                    print("mouse detected")
+                    #print("mouse detected")
                 else:
                     _b.active = False
-            
+
+            btn_action = None
+
             for event in ev:
                 if event.type == pygame.QUIT:
                     self.running = False
                 # handle MOUSEBUTTONUP
+                if event.type == pygame.MOUSEBUTTONUP:
+                    mspos = pygame.mouse.get_pos()
+                    for b in self.buttons:
+                        if b.get_rect().collidepoint(mspos):
+                            #b.active = True
+                            btn_action = b.desc
+                            print(btn_action)
+                            if btn_action == "Quit":
+                                self.running = False
+                            
+            if btn_action:
+                sent = False
+                try:
+                    self.netsocket.sendall(bytes(btn_action, 'utf-8'))
+                    data = self.netsocket.recv(1024)
+                    print(f"Received {data!r}")
+                except:
+                    self.connect_to_server()
+
                 #if event.type == pygame.MOUSEBUTTONUP:
                 #    mspos = pygame.mouse.get_pos()
                 #    if self.menu == 'WELCOME':
@@ -202,10 +247,6 @@ class App:
                 #        else:
                 #            self.display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.RESIZABLE)
 
-
-                    
-            
-            
             #if (keys[K_RIGHT]):
             #    self.player.moveRight()
             #if (keys[K_LEFT]):
@@ -217,19 +258,13 @@ class App:
             #if (keys[K_SPACE]):
             #    self.player.stop()
 
-
             self.on_loop()
             self.on_render()
-
             self.clock.tick(30)
-
         self.on_cleanup()
 
     def addWidget(self, widget):
-       
         if type(widget) == Button:
-            #print('Button')
-      
             self.buttons.append(widget)
 
 
