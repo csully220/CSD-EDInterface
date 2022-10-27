@@ -3,6 +3,7 @@ import keyboard
 from time import sleep
 
 HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
+#HOST = "192.168.0.136"
 PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -18,12 +19,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             else:
                 stringdata = data.decode('utf-8')
                 print(stringdata)
-                if stringdata == "Quit":
+                if stringdata == "quit":
                     break
-                if stringdata == "GalMap":
+                if stringdata == "galmap":
+                    pass
                     #sleep(2)
-                    keyboard.send("g")
-                if stringdata == "SysMap":
+                    #keyboard.send("g")
+                if stringdata == "sysmap":
+                    pass
                     #sleep(2)
-                    keyboard.send("s")
+                    #keyboard.send("s")
             conn.sendall(data)

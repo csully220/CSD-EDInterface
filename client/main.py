@@ -49,10 +49,11 @@ class App:
     def on_init(self):
         pygame.init()
         pygame.font.init()
-        if self.fullscreen:
+        fullscreen = False
+        if fullscreen:
             self.display_surf = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         else:
-            self.display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.RESIZABLE)
+            self.display_surf = pygame.display.set_mode((0,0), pygame.RESIZABLE)
 
         pygame.display.set_caption('CSD Elite Dangerous Control Panel')
 
@@ -97,17 +98,34 @@ class App:
         if(self.page_load):
             self.page_load = False
             self.buttons.clear()
-            self.addWidget(Button('systemmap_sm', 'SysMap', 20, 80, 320, 320))
-            self.addWidget(Button('galmap_sm', 'GalMap', 20, 400, 320, 320))
-            self.addWidget(Button('nightvision_sm', 'NVG', 340, 400, 320, 320))
-            self.addWidget(Button('quit_sm', 'Quit', 340, 400, 320, 320))
+
+            _h = 160
+            _x = _h
+            _x2 = _h * 2
+            _x3 = _h * 3
+            
+            _w = 160
+            _y = _w
+            _y2 = _w * 2
+            _y3 = _w * 3
+            _y4 = _w * 4
+            _y5 = _w * 5
+
+            
+            self.addWidget(Button('systemmap_vsm', 'sysmap',  0,   0, _h, _w))
+            self.addWidget(Button('galmap_vsm', 'galmap',     0,  _y, _h, _w))
+            self.addWidget(Button('headlights_vsm', 'hdlts',  0, _y2, _h, _w))
+            self.addWidget(Button('nightvision_vsm', 'nvg',   0, _y3, _h, _w))
+
+            self.addWidget(Button('comms_vsm', 'comms', _x, 0, _h, _w))
+            self.addWidget(Button('quit_vsm', 'quit', _x2, _y5, _h, _w))
             
             
         self.display_surf.blit(self.bg, (0, 0))
         # Render Welcome Screen
         if self.menu == 'WELCOME':
             self.display_surf.blit(self.bg, (0, 0))
-            self.display_surf.blit(self.font_lg.render('CSD ED Controls', False, orange), (20,20))
+            #self.display_surf.blit(self.font_lg.render('CSD ED Controls', False, orange), (10,10))
             for _b in self.buttons:
                 _b.draw(self.display_surf)
  
@@ -130,6 +148,7 @@ class App:
             if (keys[K_ESCAPE]):
                 self.netsocket.close()
                 self.running = False
+                break
 
             # Mouse over button highlighted
             for _b in self.buttons:
@@ -152,17 +171,20 @@ class App:
                             #b.active = True
                             btn_action = b.desc
                             print(btn_action)
-                            if btn_action == "Quit":
+                            if btn_action == "quit":
+                                self.netsocket.close()
                                 self.running = False
+                                btn_action = None
                             
             if btn_action:
-                sent = False
                 try:
                     self.netsocket.sendall(bytes(btn_action, 'utf-8'))
                     data = self.netsocket.recv(1024)
                     print(f"Received {data!r}")
+                    sent = True
                 except:
                     self.connect_to_server()
+                    retry_counter -= 1
 
                 #if event.type == pygame.MOUSEBUTTONUP:
                 #    mspos = pygame.mouse.get_pos()
