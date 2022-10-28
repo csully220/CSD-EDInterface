@@ -1,10 +1,20 @@
 import socket
 import keyboard
 from time import sleep
+import configparser
+import pygame
 
-HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
+
+config = configparser.ConfigParser()
+
+#HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
 #HOST = "192.168.0.136"
-PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
+#PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
+config.read('data/server.cfg')
+HOST = config['HOST']['IP']
+PORT = int(config['HOST']['PORT'])
+
+print("Starting the server")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
@@ -21,12 +31,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 print(stringdata)
                 if stringdata == "quit":
                     break
-                if stringdata == "galmap":
-                    pass
-                    #sleep(2)
-                    #keyboard.send("g")
-                if stringdata == "sysmap":
-                    pass
-                    #sleep(2)
-                    #keyboard.send("s")
             conn.sendall(data)

@@ -6,8 +6,15 @@ import configparser
 import socket
 from time import sleep
 
-HOST = "127.0.0.1"  # The server's hostname or IP address
-PORT = 65432  # The port used by the server
+#HOST = "127.0.0.1"  # The server's hostname or IP address
+#PORT = 65432  # The port used by the server
+
+config = configparser.ConfigParser()
+config.read('data/client.cfg')
+HOST = config['HOST']['IP']
+PORT = int(config['HOST']['PORT'])
+FULLSCREEN = config.getboolean('GENERAL','FULLSCREEN')
+OFFLINE = config.getboolean('GENERAL','OFFLINE')
 
 from lib.widgets import *
 
@@ -26,16 +33,11 @@ class App:
         self.display_surf = None
         self.bg = pygame.image.load(r'.\data\background.png')
         self.image_surf = None
-        config = configparser.ConfigParser()
-        config.read('.\data\csdedif.cfg')
-        self.ip = config['network']['server_ip']
-        self.port = config['network']['server_port']
         self.btns = []
         self.page_load = True
         self.connected = False
-        while self.connected == False:
-            self.connect_to_server()
-            
+        self.fullscreen = FULLSCREEN
+        self.offline = OFFLINE
 
     def connect_to_server(self):
         try:
@@ -49,8 +51,7 @@ class App:
     def on_init(self):
         pygame.init()
         pygame.font.init()
-        fullscreen = False
-        if fullscreen:
+        if self.fullscreen:
             self.display_surf = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         else:
             self.display_surf = pygame.display.set_mode((0,0), pygame.RESIZABLE)
@@ -79,47 +80,46 @@ class App:
             self.running = False
 
     def on_loop(self):
-        pass
-        #self.sprites.update()
-        #if self.menu != self.lastMenu:
-        #    self.lastMenu = self.menu
-        #    self.buttons.clear()
-        #    self.addWidget(Button('comms_sm', 'Comms', 20, 80, 320, 320))
-            #if self.menu == 'WELCOME':
-                
-                #self.addWidget(Button('common', 'Common', 760, 660))
-                #self.addWidget(Button('tasks', 'Progress', 970, 660))
-                #self.addWidget(Button('exit', 'Exit', 100, 900))
-
-                #self.addWidget(Button('exit', 'Back', 100, 900))
+        if not self.connected and not self.offline:
+            self.connect_to_server()
 
     def on_render(self):
-        
+        # 1920 x 1280 screen can hold 12 x 8 grid of buttons (each being 160px sq)
         if(self.page_load):
             self.page_load = False
             self.buttons.clear()
-
             _h = 160
-            _x = _h
-            _x2 = _h * 2
-            _x3 = _h * 3
-            
             _w = 160
-            _y = _w
-            _y2 = _w * 2
-            _y3 = _w * 3
-            _y4 = _w * 4
-            _y5 = _w * 5
 
+            row1 = 0
+            row2 = _h
+            row3 = _h * 2
+            row4 = _h * 3
+            row5 = _h * 4
+            row6 = _h * 5
+            row7 = _h * 6
+            row8 = _h * 7
             
-            self.addWidget(Button('systemmap_vsm', 'sysmap',  0,   0, _h, _w))
-            self.addWidget(Button('galmap_vsm', 'galmap',     0,  _y, _h, _w))
-            self.addWidget(Button('headlights_vsm', 'hdlts',  0, _y2, _h, _w))
-            self.addWidget(Button('nightvision_vsm', 'nvg',   0, _y3, _h, _w))
+            col1 = 0
+            col2 = _w
+            col3 = _w * 2
+            col4 = _w * 3
+            col5 = _w * 4
+            col6 = _w * 5
+            col7 = _w * 6
+            col8 = _w * 7
+            col9 = _w * 8
+            col10 = _w * 9
+            col11 = _w * 10
+            col12 = _w * 11
+            
+            self.addWidget(Button('systemmap_vsm', 'sysmap',  col1,  row1, _h, _w))
+            self.addWidget(Button('galmap_vsm', 'galmap',     col1,  row2, _h, _w))
+            self.addWidget(Button('headlights_vsm', 'hdlts',  col1,  row3, _h, _w))
+            self.addWidget(Button('nightvision_vsm', 'nvg',   col1,  row4, _h, _w))
 
-            self.addWidget(Button('comms_vsm', 'comms', _x, 0, _h, _w))
-            self.addWidget(Button('quit_vsm', 'quit', _x2, _y5, _h, _w))
-            
+            self.addWidget(Button('comms_vsm', 'comms', col2, row1, _h, _w))
+            self.addWidget(Button('quit_vsm', 'quit',   col3, row5, _h, _w))
             
         self.display_surf.blit(self.bg, (0, 0))
         # Render Welcome Screen
@@ -134,7 +134,6 @@ class App:
 
     def on_cleanup(self):
         pygame.quit()
-
 
     def on_execute(self):
         if self.on_init() == False:
@@ -176,7 +175,7 @@ class App:
                                 self.running = False
                                 btn_action = None
                             
-            if btn_action:
+            if btn_action and not self.offline:
                 try:
                     self.netsocket.sendall(bytes(btn_action, 'utf-8'))
                     data = self.netsocket.recv(1024)
@@ -184,101 +183,6 @@ class App:
                     sent = True
                 except:
                     self.connect_to_server()
-                    retry_counter -= 1
-
-                #if event.type == pygame.MOUSEBUTTONUP:
-                #    mspos = pygame.mouse.get_pos()
-                #    if self.menu == 'WELCOME':
-                #        # PLAYER SELECT BUTTONS
-                #        _plyrclkd = False
-                #        for _pb in self.plyrbtns:
-                #            if _pb.get_rect().collidepoint(mspos):
-                #                self.sprites.remove(self.player)
-                #                self.setPlayer(_pb.name)
-                #                self.sprites.add(self.player)
-                #                _plyrclkd = True
-                #        if(_plyrclkd):
-                #            _plyrclkd = False
-                #            for pn, po in self.players.items():
-                #                po.chosen = False
-                #                if po.name == self.player.name:
-                #                    po.chosen = True
-                #                    self.spawn_sound.play()
-                #            self.menu = 'TASKS'
-                #            self.bg = pygame.image.load(r'.\data\images\bg_empty.png')
-                #
-                #        # OTHER BUTTONS
-                #        for _b in self.buttons:
-                #            if _b.rect.collidepoint(mspos):
-                #                #print(_b.action)
-                #                if _b.action == 'common':
-                #                    self.setPlayer('Common')
-                #                    self.menu = 'TASKS'
-                #                    self.spawn_sound.play()
-                #                    self.bg = pygame.image.load(r'.\data\images\bg_empty.png')
-                #                if _b.action == 'exit':
-                #                    # EXIT
-                #                    print('Exit!')
-                #                    self.running = False
-                #
-                #    elif self.menu == 'TASKS':
-                #        # TASK CHECKBOXES
-                #        idx = 0
-                #        for tb in self.tskbtns:
-                #            _tbrect = pygame.Rect(tb.x, tb.y, tb.w, tb.h)
-                #            if _tbrect.collidepoint(mspos):
-                #                if tb.id == self.players['Common'].id:
-                #                    self.players['Common'].tasks[idx].completed = not self.players['Common'].tasks[idx].completed
-                #                    self.db.updateOccurrence(self.players['Common'].tasks[idx], self.player.id)
-                #                else:
-                #                    #self.task_incomplete_sound.play()
-                #                    self.player.tasks[idx].completed = not self.player.tasks[idx].completed
-                #                    self.db.updateOccurrence(self.player.tasks[idx], self.player.id)
-                #                    self.lastMenu = 'NONE'
-                #                    #break;
-                #            idx += 1
-                #        for _b in self.buttons:
-                #        # BACK
-                #            if _b.rect.collidepoint(mspos):
-                #                if _b.action == 'exit':
-                #                    for t in self.taskstosave:
-                #                        print("Task to save " + t.title)
-                #                        #self.db.updateOccurrence(t, self.player.id)
-                #                    self.menu = 'WELCOME'
-                #                    self.bg = pygame.image.load(r'.\data\images\bg_title.png')
-                #    print(mspos)
-                #elif event.type == pygame.KEYDOWN:
-##              #      if event.key == pygame.K_RIGHT:
-##              #          self.player.moveRight()
-##              #          #print('right')
-##              #      if event.key == pygame.K_LEFT:
-##              #          self.player.moveLeft()
-##              #          #print('left')
-##              #      if event.key == pygame.K_UP:
-##              #          self.player.moveUp()
-##              #          #print('up')
-##              #      if event.key == pygame.K_DOWN:
-##              #          self.player.moveDown()
-##              #          #print('down')
-                #    if event.key == pygame.K_SPACE:
-                #        self.player.stop()
-                #    if event.key == pygame.K_ESCAPE:
-                #        self.fullscreen = not self.fullscreen
-                #        if self.fullscreen:
-                #            self.display_surf = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
-                #        else:
-                #            self.display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.RESIZABLE)
-
-            #if (keys[K_RIGHT]):
-            #    self.player.moveRight()
-            #if (keys[K_LEFT]):
-            #    self.player.moveLeft()
-            #if (keys[K_UP]):
-            #    self.player.moveUp()
-            #if (keys[K_DOWN]):
-            #    self.player.moveDown()
-            #if (keys[K_SPACE]):
-            #    self.player.stop()
 
             self.on_loop()
             self.on_render()
