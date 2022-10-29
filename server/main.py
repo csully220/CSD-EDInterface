@@ -14,6 +14,7 @@ config.read('data/server.cfg')
 HOST = config['HOST']['IP']
 PORT = int(config['HOST']['PORT'])
 
+
 print("Starting the server")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -31,4 +32,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 print(stringdata)
                 if stringdata == "quit":
                     break
+                elif stringdata == "galmap":
+                    keyboard.send('g')
+                elif stringdata == 'sysmap':
+                    keyboard.send('s')
+                
             conn.sendall(data)

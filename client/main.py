@@ -119,7 +119,7 @@ class App:
             self.addWidget(Button('nightvision_vsm', 'nvg',   col1,  row4, _h, _w))
 
             self.addWidget(Button('comms_vsm', 'comms', col2, row1, _h, _w))
-            self.addWidget(Button('quit_vsm', 'quit',   col3, row5, _h, _w))
+            self.addWidget(Button('quit_vsm', 'quit',   col12, row8, _h, _w))
             
         self.display_surf.blit(self.bg, (0, 0))
         # Render Welcome Screen
